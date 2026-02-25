@@ -1,23 +1,25 @@
+@import "pretendard/dist/web/static/pretendard.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 50 40% 98%;
-  --foreground: 20 14% 12%;
-  --card: 0 0% 100%;
-  --card-foreground: 20 14% 12%;
-  --primary: 16 83% 46%;
+  --background: 42 33% 95%;
+  --foreground: 28 18% 17%;
+  --card: 40 45% 97%;
+  --card-foreground: 28 18% 17%;
+  --primary: 31 94% 52%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 35 60% 94%;
-  --secondary-foreground: 20 14% 12%;
-  --muted: 38 40% 92%;
-  --muted-foreground: 20 10% 38%;
-  --accent: 143 43% 90%;
-  --accent-foreground: 154 46% 20%;
-  --border: 20 20% 85%;
-  --input: 20 20% 85%;
-  --ring: 16 83% 46%;
+  --secondary: 36 40% 91%;
+  --secondary-foreground: 28 18% 17%;
+  --muted: 34 32% 89%;
+  --muted-foreground: 24 12% 38%;
+  --accent: 31 86% 90%;
+  --accent-foreground: 24 58% 27%;
+  --border: 30 22% 79%;
+  --input: 30 22% 79%;
+  --ring: 31 94% 52%;
   --radius: 0.75rem;
 }
 
@@ -26,5 +28,16 @@
 }
 
 body {
-  @apply bg-background text-foreground antialiased;
+  @apply text-foreground antialiased;
+  font-family: "Pretendard", "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif;
+  min-height: 100vh;
+  background:
+    radial-gradient(
+      ellipse 80% 70% at 50% 40%,
+      hsl(42 33% 96%) 0%,
+      hsl(40 30% 93%) 35%,
+      hsl(36 25% 88%) 60%,
+      hsl(32 20% 78%) 100%
+    );
+  background-attachment: fixed;
 }
