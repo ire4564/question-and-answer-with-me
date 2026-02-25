@@ -161,7 +161,7 @@ export function MyLetterDetail() {
             </div>
           )}
           <div className="flex items-center justify-between gap-2">
-            <Button type="button" variant="outline" onClick={() => setEditStep((prev) => Math.max(prev - 1, 0))}>
+            <Button type="button" onClick={() => setEditStep((prev) => Math.max(prev - 1, 0))}>
               이전
             </Button>
             <Button
@@ -178,7 +178,7 @@ export function MyLetterDetail() {
               {isLastEditStep ? "저장" : "다음"}
             </Button>
           </div>
-          <Button type="button" variant="ghost" onClick={() => setEditing(false)}>
+          <Button type="button" onClick={() => setEditing(false)}>
             취소
           </Button>
           {saveMutation.isError ? <p className="text-sm text-red-600">저장에 실패했습니다.</p> : null}
@@ -198,7 +198,7 @@ export function MyLetterDetail() {
         <p className="rounded-md bg-secondary/70 p-4 text-sm leading-7">{currentAnswer}</p>
 
         <div className="flex items-center justify-between gap-2">
-          <Button type="button" variant="outline" onClick={() => setSlideIndex((prev) => Math.max(prev - 1, 0))}>
+          <Button type="button" onClick={() => setSlideIndex((prev) => Math.max(prev - 1, 0))}>
             이전
           </Button>
           <Button type="button" onClick={() => setSlideIndex((prev) => Math.min(prev + 1, totalSlides - 1))}>

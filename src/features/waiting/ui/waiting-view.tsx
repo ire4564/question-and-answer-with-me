@@ -86,7 +86,7 @@ export function WaitingView() {
         {submitMutation.isPending ? <p className="text-sm text-muted-foreground">잠시만 기다려 주세요...</p> : null}
 
         {submitMutation.isSuccess ? (
-          <Link href="/inbox" className={cn(buttonVariants({ variant: "default" }))}>
+          <Link href="/inbox" className={cn(buttonVariants())}>
             수신함으로 이동
           </Link>
         ) : null}
@@ -94,7 +94,7 @@ export function WaitingView() {
         {error ? (
           <div className="space-y-2">
             <p className="text-sm text-red-600">{error}</p>
-            <Button type="button" variant="outline" onClick={() => submitMutation.mutate()}>
+            <Button type="button" onClick={() => submitMutation.mutate()}>
               다시 시도
             </Button>
           </div>

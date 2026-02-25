@@ -83,10 +83,10 @@ export function InboxList() {
             {!item.notified ? <p className="text-sm font-medium">{item.fromEmail} 님이 가치 편지를 보냈어요</p> : null}
             <p className="text-xs text-muted-foreground">보낸 시각: {item.sentAt ?? "확인 불가"}</p>
             <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" onClick={() => readMutation.mutate(item.id)}>
+              <Button type="button" onClick={() => readMutation.mutate(item.id)}>
                 알림 확인
               </Button>
-              <Link href={`/letters/${item.id}`} className={cn(buttonVariants({ variant: "default" }))}>
+              <Link href={`/letters/${item.id}`} className={cn(buttonVariants())}>
                 읽어보기
               </Link>
             </div>

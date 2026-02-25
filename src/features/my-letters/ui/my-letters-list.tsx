@@ -57,7 +57,7 @@ export function MyLettersList() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-xs text-muted-foreground">보낸 시각: {item.sentAt ?? "확인 불가"}</p>
-            <Link href={`/my-letters/${item.id}`} className={cn(buttonVariants({ variant: "default" }))}>
+            <Link href={`/my-letters/${item.id}`} className={cn(buttonVariants())}>
               이 답변 보기
             </Link>
           </CardContent>
