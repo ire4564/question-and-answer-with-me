@@ -1,6 +1,7 @@
 "use client";
 
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
@@ -51,7 +52,14 @@ export function GoogleLoginButton() {
 
   return (
     <div className="space-y-2">
-      <Button type="button" onClick={handleLogin} disabled={loading || !envReady}>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={handleLogin}
+        disabled={loading || !envReady}
+        className="border-primary bg-transparent font-bold text-primary hover:bg-primary/10 min-w-[240px]"
+      >
+        <Image src="/assets/google-logo.svg" alt="Google" width={20} height={20}  />
         {loading ? "로그인 중..." : "구글 로그인하기"}
       </Button>
       {!envReady ? (
