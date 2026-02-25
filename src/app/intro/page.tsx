@@ -46,14 +46,14 @@ export default function IntroPage() {
             ))}
           </div>
           <Link
-            href="/write"
+            href="/hub"
             aria-disabled={!completed}
             className={cn(
               buttonVariants({ variant: "default" }),
               !completed ? "pointer-events-none opacity-50" : "",
             )}
           >
-            질문 작성 시작하기
+            시작하기
           </Link>
         </CardContent>
       </Card>

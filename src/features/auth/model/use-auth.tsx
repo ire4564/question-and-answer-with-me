@@ -20,33 +20,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const firebaseAuth = getFirebaseAuth();
+    if (!firebaseAuth) {
+      setLoading(false);
+      return;
+    }
 
     const unsubscribe = onAuthStateChanged(firebaseAuth, async (nextUser) => {
       setUser(nextUser);
       setLoading(false);
 
       if (nextUser) {
-        const token = await nextUser.getIdToken();
+        try {
+          const token = await nextUser.getIdToken();
 
-        await fetch("/api/auth/session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ token }),
-        });
+          await fetch("/api/auth/session", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ token }),
+          });
 
-        await fetch("/api/users/sync", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+          await fetch("/api/users/sync", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+        } catch {
+          // Keep UI usable even when session sync temporarily fails.
+        }
       } else {
-        await fetch("/api/auth/session", {
-          method: "DELETE",
-        });
+        try {
+          await fetch("/api/auth/session", {
+            method: "DELETE",
+          });
+        } catch {
+          // Ignore transient network issues on logout sync.
+        }
       }
     });
 

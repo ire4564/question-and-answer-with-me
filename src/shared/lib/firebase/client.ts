@@ -11,30 +11,45 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-function assertFirebaseEnv() {
-  const required = [
-    "NEXT_PUBLIC_FIREBASE_API_KEY",
-    "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
-    "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
-    "NEXT_PUBLIC_FIREBASE_APP_ID",
-  ];
+const requiredClientEnv = {
+  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+} as const;
 
-  const missing = required.filter((key) => !process.env[key]);
+export function getMissingFirebaseClientEnv() {
+  return Object.entries(requiredClientEnv)
+    .filter(([, value]) => !value)
+    .map(([key]) => key);
+}
 
-  if (missing.length) {
-    throw new Error(`Missing Firebase client env: ${missing.join(", ")}`);
-  }
+export function hasFirebaseClientEnv() {
+  return getMissingFirebaseClientEnv().length === 0;
 }
 
 function getFirebaseApp() {
-  assertFirebaseEnv();
+  if (!hasFirebaseClientEnv()) {
+    return null;
+  }
+
   return getApps().length ? getApp() : initializeApp(firebaseConfig);
 }
 
 export function getFirebaseAuth() {
-  return getAuth(getFirebaseApp());
+  const app = getFirebaseApp();
+  if (!app) {
+    return null;
+  }
+
+  return getAuth(app);
 }
 
 export function getFirestoreClient() {
-  return getFirestore(getFirebaseApp());
+  const app = getFirebaseApp();
+  if (!app) {
+    return null;
+  }
+
+  return getFirestore(app);
 }

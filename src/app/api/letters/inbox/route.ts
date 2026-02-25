@@ -4,6 +4,41 @@ import { getAdminDb } from "@/shared/lib/firebase/admin";
 import { normalizeEmail } from "@/shared/lib/email/normalize-email";
 import { verifyRequestToken } from "@/shared/lib/auth/verify-token";
 
+function getSentAtMillis(value: unknown) {
+  if (value && typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.getTime();
+    }
+  }
+
+  return 0;
+}
+
+function toIsoStringOrNull(value: unknown) {
+  if (value && typeof value === "object" && "toDate" in value && typeof value.toDate === "function") {
+    return value.toDate().toISOString();
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "string") {
+    return value;
+  }
+
+  return null;
+}
+
 export async function GET(req: NextRequest) {
   try {
     const decoded = await verifyRequestToken(req);
@@ -14,7 +49,24 @@ export async function GET(req: NextRequest) {
     }
 
     const db = getAdminDb();
-    const snapshot = await db.collection("letters").where("toEmail", "==", email).orderBy("sentAt", "desc").get();
+    let snapshot;
+    try {
+      snapshot = await db.collection("letters").where("toEmail", "==", email).orderBy("sentAt", "desc").get();
+    } catch (error: unknown) {
+      const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
+      if (code !== 9) {
+        throw error;
+      }
+
+      const fallback = await db.collection("letters").where("toEmail", "==", email).get();
+      const sortedDocs = [...fallback.docs].sort((a, b) => {
+        const aSentAt = getSentAtMillis(a.data().sentAt);
+        const bSentAt = getSentAtMillis(b.data().sentAt);
+        return bSentAt - aSentAt;
+      });
+
+      snapshot = { docs: sortedDocs };
+    }
 
     const letters = await Promise.all(
       snapshot.docs.map(async (doc) => {
@@ -48,9 +100,9 @@ export async function GET(req: NextRequest) {
           fromEmail: data.fromEmail,
           toEmail: data.toEmail,
           status: data.status,
-          sentAt: data.sentAt ?? null,
+          sentAt: toIsoStringOrNull(data.sentAt),
           notified: receiptData?.notified ?? false,
-          seenAt: receiptData?.seenAt ?? null,
+          seenAt: toIsoStringOrNull(receiptData?.seenAt),
         };
       }),
     );
