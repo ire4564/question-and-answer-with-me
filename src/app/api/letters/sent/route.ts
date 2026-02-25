@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/shared/lib/firebase/admin";
 import { verifyRequestToken } from "@/shared/lib/auth/verify-token";
+import { normalizeEmail } from "@/shared/lib/email/normalize-email";
 
 function getSentAtMillis(value: unknown) {
   if (value && typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function") {
@@ -40,26 +41,46 @@ function toIsoStringOrNull(value: unknown) {
 export async function GET(req: NextRequest) {
   try {
     const decoded = await verifyRequestToken(req);
+    const email = normalizeEmail(decoded.email ?? "");
     const db = getAdminDb();
+    const docsById = new Map<string, FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>>();
 
-    let docs;
+    const loadByFromUid = async () => {
+      try {
+        const snapshot = await db.collection("letters").where("fromUid", "==", decoded.uid).orderBy("sentAt", "desc").get();
+        snapshot.docs.forEach((doc) => docsById.set(doc.id, doc));
+      } catch (error: unknown) {
+        const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
+        if (code !== 9) {
+          throw error;
+        }
 
-    try {
-      const snapshot = await db.collection("letters").where("fromUid", "==", decoded.uid).orderBy("sentAt", "desc").get();
-      docs = snapshot.docs;
-    } catch (error: unknown) {
-      const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
-      if (code !== 9) {
-        throw error;
+        const fallback = await db.collection("letters").where("fromUid", "==", decoded.uid).get();
+        fallback.docs.forEach((doc) => docsById.set(doc.id, doc));
+      }
+    };
+
+    const loadByFromEmail = async () => {
+      if (!email) {
+        return;
       }
 
-      const fallback = await db.collection("letters").where("fromUid", "==", decoded.uid).get();
-      docs = [...fallback.docs].sort((a, b) => {
-        const aSentAt = getSentAtMillis(a.data().sentAt);
-        const bSentAt = getSentAtMillis(b.data().sentAt);
-        return bSentAt - aSentAt;
-      });
-    }
+      try {
+        const snapshot = await db.collection("letters").where("fromEmail", "==", email).orderBy("sentAt", "desc").get();
+        snapshot.docs.forEach((doc) => docsById.set(doc.id, doc));
+      } catch (error: unknown) {
+        const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
+        if (code !== 9) {
+          throw error;
+        }
+
+        const fallback = await db.collection("letters").where("fromEmail", "==", email).get();
+        fallback.docs.forEach((doc) => docsById.set(doc.id, doc));
+      }
+    };
+
+    await Promise.all([loadByFromUid(), loadByFromEmail()]);
+    const docs = [...docsById.values()].sort((a, b) => getSentAtMillis(b.data().sentAt) - getSentAtMillis(a.data().sentAt));
 
     const data = docs.map((doc) => {
       const letter = doc.data();

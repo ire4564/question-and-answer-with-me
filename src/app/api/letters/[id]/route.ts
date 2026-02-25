@@ -9,6 +9,25 @@ interface Params {
   params: Promise<{ id: string }>;
 }
 
+function getSentAtMillis(value: unknown) {
+  if (value && typeof value === "object" && "toMillis" in value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) {
+      return date.getTime();
+    }
+  }
+
+  return 0;
+}
+
 export async function GET(req: NextRequest, context: Params) {
   try {
     const decoded = await verifyRequestToken(req);
@@ -36,15 +55,36 @@ export async function GET(req: NextRequest, context: Params) {
       return NextResponse.json({ ok: false, message: "Forbidden" }, { status: 403 });
     }
 
-    const mySentLetterSnap = await db
-      .collection("letters")
-      .where("fromUid", "==", decoded.uid)
-      .where("toEmail", "==", normalizeEmail(letter.fromEmail ?? ""))
-      .orderBy("sentAt", "desc")
-      .limit(1)
-      .get();
+    const targetEmail = normalizeEmail(letter.fromEmail ?? "");
+    let myAnswers: unknown[] = [];
 
-    const myAnswers = mySentLetterSnap.empty ? [] : (mySentLetterSnap.docs[0].data().answers ?? []);
+    try {
+      const mySentLetterSnap = await db
+        .collection("letters")
+        .where("fromUid", "==", decoded.uid)
+        .where("toEmail", "==", targetEmail)
+        .orderBy("sentAt", "desc")
+        .limit(1)
+        .get();
+
+      myAnswers = mySentLetterSnap.empty ? [] : (mySentLetterSnap.docs[0].data().answers ?? []);
+    } catch (error: unknown) {
+      const code = typeof error === "object" && error && "code" in error ? error.code : undefined;
+      if (code !== 9) {
+        throw error;
+      }
+
+      const fallback = await db
+        .collection("letters")
+        .where("fromUid", "==", decoded.uid)
+        .where("toEmail", "==", targetEmail)
+        .get();
+
+      if (!fallback.empty) {
+        const latest = [...fallback.docs].sort((a, b) => getSentAtMillis(b.data().sentAt) - getSentAtMillis(a.data().sentAt))[0];
+        myAnswers = latest.data().answers ?? [];
+      }
+    }
 
     return NextResponse.json({
       ok: true,
