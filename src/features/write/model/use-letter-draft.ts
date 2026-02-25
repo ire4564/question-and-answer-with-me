@@ -3,70 +3,43 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { QUESTION_SECTIONS } from "@/entities/question/model/questions";
 import type { LetterAnswer } from "@/entities/letter/model/types";
-
-const STORAGE_KEY = "value-letter-draft-v1";
-const STEP_KEY = "value-letter-step-v1";
+import {
+  loadDraftState,
+  loadDraftStep,
+  saveDraftState,
+  saveDraftStep,
+  type LetterDraftState,
+} from "@/shared/lib/letters/draft-storage";
 
 const QUESTION_ORDER = QUESTION_SECTIONS.flatMap((section) =>
   section.questions.map((question) => ({ sectionId: section.sectionId, questionId: question.questionId, prompt: question.prompt, title: section.title })),
 );
 
-interface DraftState {
-  answers: Record<string, string>;
-  toEmail: string;
-}
-
 function getAnswerKey(sectionId: string, questionId: string) {
   return `${sectionId}:${questionId}`;
 }
 
-function loadInitialState(): DraftState {
-  if (typeof window === "undefined") {
-    return { answers: {}, toEmail: "" };
-  }
-
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-
-  if (!raw) {
-    return { answers: {}, toEmail: "" };
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as DraftState;
+export function buildAnswersFromState(state: LetterDraftState): LetterAnswer[] {
+  return QUESTION_ORDER.map((q) => {
+    const answerText = state.answers[getAnswerKey(q.sectionId, q.questionId)] ?? "";
     return {
-      answers: parsed.answers ?? {},
-      toEmail: parsed.toEmail ?? "",
+      sectionId: q.sectionId,
+      questionId: q.questionId,
+      answerText,
     };
-  } catch {
-    return { answers: {}, toEmail: "" };
-  }
-}
-
-function loadInitialStep() {
-  if (typeof window === "undefined") {
-    return 0;
-  }
-
-  const raw = window.localStorage.getItem(STEP_KEY);
-  const parsed = Number(raw);
-
-  if (!Number.isInteger(parsed) || parsed < 0 || parsed >= QUESTION_ORDER.length + 1) {
-    return 0;
-  }
-
-  return parsed;
+  }).filter((answer) => answer.answerText.length > 0);
 }
 
 export function useLetterDraft() {
-  const [state, setState] = useState<DraftState>(loadInitialState);
-  const [step, setStep] = useState<number>(loadInitialStep);
+  const [state, setState] = useState<LetterDraftState>(loadDraftState);
+  const [step, setStep] = useState<number>(() => loadDraftStep(QUESTION_ORDER.length));
 
   useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    saveDraftState(state);
   }, [state]);
 
   useEffect(() => {
-    window.localStorage.setItem(STEP_KEY, String(step));
+    saveDraftStep(step);
   }, [step]);
 
   const currentQuestion = QUESTION_ORDER[step] ?? null;
@@ -79,16 +52,7 @@ export function useLetterDraft() {
     return state.answers[getAnswerKey(currentQuestion.sectionId, currentQuestion.questionId)] ?? "";
   }, [currentQuestion, state.answers]);
 
-  const answers = useMemo<LetterAnswer[]>(() => {
-    return QUESTION_ORDER.map((q) => {
-      const answerText = state.answers[getAnswerKey(q.sectionId, q.questionId)] ?? "";
-      return {
-        sectionId: q.sectionId,
-        questionId: q.questionId,
-        answerText,
-      };
-    }).filter((answer) => answer.answerText.length > 0);
-  }, [state.answers]);
+  const answers = useMemo<LetterAnswer[]>(() => buildAnswersFromState(state), [state]);
 
   const setCurrentAnswer = useCallback(
     (value: string) => {
