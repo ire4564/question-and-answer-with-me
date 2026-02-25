@@ -169,3 +169,47 @@
 - 긴 텍스트 입력 UX를 위해 글자 수 카운터 제공
 - 전송 직후 로딩 상태와 재시도 UX를 반드시 제공
 
+
+## 11. 로컬 실행
+
+1. 의존성 설치
+```bash
+npm install
+```
+
+2. 환경변수 설정
+- `.env.example`를 참고해서 `.env.local` 파일 생성
+- Firebase Client/Admin 키 값 채우기
+
+3. 개발 서버 실행
+```bash
+npm run dev
+```
+
+## 12. 배포 체크리스트 (Vercel)
+
+1. Vercel 프로젝트 연결
+- GitHub 저장소 연결 후 Framework Preset: Next.js 확인
+
+2. 환경변수 등록
+- `.env.example`의 모든 키를 Vercel Project Environment Variables에 등록
+- `FIREBASE_PRIVATE_KEY`는 줄바꿈(`\n`) 포함 문자열로 등록
+
+3. 프로덕션 빌드 검증
+```bash
+npm run build
+npm run start
+```
+
+4. 배포 후 스모크 테스트
+- 구글 로그인
+- `/intro` -> `/write` -> `/waiting` 흐름
+- `/inbox` 목록 조회
+- `/letters/[id]` 상세 조회
+
+## 13. 현재 구현 상태 (2026-02-25)
+
+- Phase 1~8 중 Vercel 실제 연결을 제외한 항목 구현 완료
+- API 4종(`POST /letters`, `GET /letters/inbox`, `GET /letters/:id`, `POST /letters/:id/read`) 구현
+- Firebase Auth + 보호 라우트 + users 동기화 구현
+- Firestore Rules 초안(`firestore.rules`) 추가
