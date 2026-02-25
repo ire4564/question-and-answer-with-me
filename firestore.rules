@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function normalizedEmail(email) {
+      return lower(email);
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /letters/{letterId} {
+      allow create: if signedIn()
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.fromEmail == normalizedEmail(request.auth.token.email)
+        && request.resource.data.answers is list
+        && request.resource.data.toEmail is string;
+
+      allow read: if signedIn()
+        && (
+          resource.data.fromUid == request.auth.uid ||
+          resource.data.toEmail == normalizedEmail(request.auth.token.email)
+        );
+
+      allow update, delete: if false;
+    }
+
+    match /receipts/{receiptId} {
+      allow read, create, update: if signedIn() && request.resource.data.receiverUid == request.auth.uid;
+      allow delete: if false;
+    }
+  }
+}

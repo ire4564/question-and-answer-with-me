@@ -47,22 +47,29 @@ export function WriteForm() {
               <p className="text-base font-medium leading-7">{currentQuestion.prompt}</p>
             </div>
             <div className="space-y-2">
+              <label htmlFor="answer-input" className="text-sm font-medium">
+                답변 입력
+              </label>
               <Textarea
+                id="answer-input"
                 value={currentAnswer}
                 onChange={(event) => setCurrentAnswer(event.target.value.slice(0, MAX_ANSWER_LENGTH))}
                 maxLength={MAX_ANSWER_LENGTH}
                 rows={8}
                 placeholder="여기에 답변을 적어주세요"
               />
-              <p className="text-right text-xs text-muted-foreground">
+              <p className="text-right text-xs text-muted-foreground" aria-live="polite">
                 {answerLength} / {MAX_ANSWER_LENGTH}
               </p>
             </div>
           </>
         ) : (
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">상대 이메일을 입력하고 제출 단계로 이동하세요.</p>
+            <label htmlFor="to-email" className="text-sm font-medium">
+              상대 이메일
+            </label>
             <Input
+              id="to-email"
               type="email"
               value={toEmail}
               onChange={(event) => setToEmail(event.target.value)}
