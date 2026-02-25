@@ -16,3 +16,6 @@ yarn-error.log*
 
 # misc
 .DS_Store
+
+# firebase admin sdk key (절대 커밋 금지)
+*-firebase-adminsdk-*.json
