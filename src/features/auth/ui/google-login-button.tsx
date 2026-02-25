@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "@/shared/ui/button";
 import { getFirebaseAuth, hasFirebaseClientEnv } from "@/shared/lib/firebase/client";
+import { apiClient } from "@/shared/api/client";
 
 export function GoogleLoginButton() {
   const router = useRouter();
@@ -22,7 +23,20 @@ export function GoogleLoginButton() {
       if (!firebaseAuth) {
         throw new Error("Firebase 환경변수가 로드되지 않았습니다. dev 서버를 재시작해 주세요.");
       }
-      await signInWithPopup(firebaseAuth, provider);
+      const credential = await signInWithPopup(firebaseAuth, provider);
+      const token = await credential.user.getIdToken();
+
+      const sentResponse = await apiClient.get<{ ok: boolean; data: Array<{ id: string }> }>("/letters/sent", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (sentResponse.data.data.length > 0) {
+        router.push("/hub");
+        return;
+      }
+
       router.push("/intro");
     } catch (err) {
       if (err instanceof Error) {
